@@ -2,111 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mobile & PC QR Code Scanner</title>
+  <title>Simple QR Code Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Corrected script URL using the "dist" folder -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.7/dist/html5-qrcode.min.js" defer></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 20px;
     }
-    /* Style for the start button */
-    #start-scan {
-      padding: 10px 20px;
-      font-size: 1em;
-      cursor: pointer;
-      background-color: #007bff;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      margin-top: 20px;
-    }
-    #start-scan:hover {
-      background-color: #0056b3;
-    }
-    /* Container for the QR scanner, hidden by default */
+    /* Style for the QR scanner container */
     #reader {
-      width: 90%;
+      width: 100%;
       max-width: 400px;
-      margin: 20px auto;
-      display: none;
+      margin: auto;
     }
-    /* Styling for the scan result text */
+    /* Style for the start button */
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    /* Result display styling */
     #result {
       margin-top: 20px;
-      font-size: 1.2em;
+      font-size: 18px;
       color: green;
-      word-wrap: break-word;
-    }
-    /* Error log area */
-    #errorLog {
-      margin-top: 20px;
-      font-size: 1em;
-      color: red;
     }
   </style>
 </head>
 <body>
-  <h1>Campus Engagement QR Scanner</h1>
-  <p>Press the button below to start scanning QR codes.</p>
-  <!-- Button to initiate the QR scanner -->
-  <button id="start-scan">Start QR Scanner</button>
-  <!-- QR code scanner container (initially hidden) -->
-  <div id="reader"></div>
-  <!-- Display the scan results -->
-  <div id="result">Waiting for scan...</div>
-  <!-- Display any errors -->
-  <div id="errorLog"></div>
-  
-  <script>
-    // Wait until the DOM is fully loaded (and the deferred script has been executed)
-    window.addEventListener("DOMContentLoaded", function() {
-      console.log("DOM fully loaded and parsed.");
+  <h1>QR Code Scanner</h1>
+  <!-- Button to start the scanner -->
+  <button id="startButton">Start Scanner</button>
+  <!-- Container where the camera view and scanning will appear -->
+  <div id="reader" style="display: none;"></div>
+  <!-- Display the decoded QR code text -->
+  <div id="result"></div>
 
-      // Check if the Html5QrcodeScanner class is available
-      if (typeof Html5QrcodeScanner === "undefined") {
-        const errMsg = "Html5QrcodeScanner is not defined. Please check that the html5-qrcode library is loading correctly.";
-        console.error(errMsg);
-        document.getElementById("errorLog").innerText = errMsg;
-        return; // Stop further execution if the library isn't available.
-      }
-      
-      // Add event listener to start the QR scanner when the button is clicked
-      document.getElementById("start-scan").addEventListener("click", function() {
-        console.log("Start button clicked.");
-        // Hide the start button and show the scanner container
-        document.getElementById("start-scan").style.display = "none";
-        document.getElementById("reader").style.display = "block";
-        
-        try {
-          const html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            false  // verbose mode off for cleaner console output
-          );
-          html5QrcodeScanner.render(onScanSuccess, onScanError);
-        } catch (err) {
-          console.error("Error initializing QR scanner:", err);
-          document.getElementById("errorLog").innerText = `Initialization error: ${err}`;
-        }
-      });
-      
-      // Callback function when a QR code is successfully scanned
+  <!-- Include the html5-qrcode library from the correct URL -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.7/dist/html5-qrcode.min.js"></script>
+  <script>
+    // Wait for the button click to start the scanner
+    document.getElementById("startButton").addEventListener("click", function() {
+      // Hide the start button and show the reader container
+      document.getElementById("startButton").style.display = "none";
+      document.getElementById("reader").style.display = "block";
+
+      // Define the success callback
       function onScanSuccess(decodedText, decodedResult) {
-        console.log(`QR Code detected: ${decodedText}`);
-        document.getElementById("result").innerText = `QR Code detected: ${decodedText}`;
-        // Clear any previous error messages
-        document.getElementById("errorLog").innerText = "";
+        console.log("Decoded text:", decodedText);
+        document.getElementById("result").innerText = "Decoded: " + decodedText;
+        // Stop scanning after a successful scan
+        html5QrcodeScanner.stop().then(() => {
+          console.log("Scanning stopped.");
+        }).catch(err => {
+          console.error("Error stopping scanning:", err);
+        });
       }
-      
-      // Callback function for scan errors (optional logging)
-      function onScanError(errorMessage) {
-        console.warn(`QR Code scan error: ${errorMessage}`);
-        // Display error messages on the page (you can remove this if too verbose)
-        document.getElementById("errorLog").innerText = `Error: ${errorMessage}`;
+
+      // Define the error callback (optional)
+      function onScanFailure(error) {
+        console.warn("Scan failure:", error);
       }
+
+      // Create an instance of the scanner and start scanning using the back camera
+      const html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" }, // Use the back camera
+        { fps: 10, qrbox: 250 },         // Scanning configuration
+        onScanSuccess,                  // Success callback
+        onScanFailure                   // Error callback
+      ).catch(err => {
+        console.error("Unable to start scanning:", err);
+        document.getElementById("result").innerText = "Error: " + err;
+      });
     });
   </script>
 </body>
