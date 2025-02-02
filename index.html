@@ -40,6 +40,12 @@
       color: green;
       word-wrap: break-word;
     }
+    /* Error log area */
+    #errorLog {
+      margin-top: 20px;
+      font-size: 1em;
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -51,41 +57,43 @@
   <div id="reader"></div>
   <!-- Display the scan results -->
   <div id="result">Waiting for scan...</div>
+  <!-- Display any errors -->
+  <div id="errorLog"></div>
   
   <script>
     // Callback function when a QR code is successfully scanned
     function onScanSuccess(decodedText, decodedResult) {
       console.log(`QR Code detected: ${decodedText}`);
       document.getElementById("result").innerText = `QR Code detected: ${decodedText}`;
-
-      // OPTIONAL: Send scanned data to a server to log campus engagement
-      // Example:
-      // fetch('https://your-server-endpoint.com/log', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ code: decodedText, timestamp: Date.now() })
-      // });
+      // Clear any previous error messages
+      document.getElementById("errorLog").innerText = "";
     }
 
     // Callback function for scan errors (optional logging)
     function onScanError(errorMessage) {
       console.warn(`QR Code scan error: ${errorMessage}`);
+      // Display error messages on the page (you can remove this if too verbose)
+      document.getElementById("errorLog").innerText = `Error: ${errorMessage}`;
     }
 
     // Add event listener to start the QR scanner when the button is clicked
     document.getElementById("start-scan").addEventListener("click", function() {
-      // Hide the start button and show the scanner
+      console.log("Start button clicked.");
+      // Hide the start button and show the scanner container
       document.getElementById("start-scan").style.display = "none";
       document.getElementById("reader").style.display = "block";
       
-      // Initialize the QR scanner
-      const html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", 
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false  // verbose mode set to false for cleaner console output
-      );
-      // Render the scanner, passing in the callback functions
-      html5QrcodeScanner.render(onScanSuccess, onScanError);
+      try {
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+          "reader", 
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          false  // verbose mode off for cleaner console output
+        );
+        html5QrcodeScanner.render(onScanSuccess, onScanError);
+      } catch (err) {
+        console.error("Error initializing QR scanner:", err);
+        document.getElementById("errorLog").innerText = `Initialization error: ${err}`;
+      }
     });
   </script>
 </body>
